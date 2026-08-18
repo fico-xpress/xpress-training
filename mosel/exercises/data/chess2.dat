@@ -1,0 +1,8 @@
+! Data file for 'chess4s.mos'
+
+DUR:    [("small") 3 ("large") 2]
+WOOD:   [("small") 1 ("large") 3]
+PROFIT: [("small") 5 ("large") 20]
+
+CHESSDATA: [ ("small") [3 1 5]
+             ("large") [2 3 20] ]

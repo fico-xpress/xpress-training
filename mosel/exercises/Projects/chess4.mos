@@ -1,0 +1,36 @@
+(!******************************************************
+   Mosel Example Problems
+   ======================
+
+   file chess4.mos
+   ```````````````
+   Data input from file.
+   
+   (c) 2008 Fair Isaac Corporation
+       Creation: 2005
+   
+   The use of this example is subject to legal and
+   license requirements
+   (https://github.com/fico-xpress/xpress-training#legal-and-license-requirements).
+*******************************************************!)
+
+model "Chess 4"
+ uses "mmxprs" 
+ 
+ declarations
+  PRODS = 1..2                             ! Index range
+  DUR, WOOD, PROFIT: array(PRODS) of real  ! Coefficients
+  x: array(PRODS) of mpvar                 ! Array of variables
+ end-declarations
+
+ initializations from "../data/chess.dat"          ! Read data from file
+  DUR WOOD PROFIT
+ end-initializations
+
+ sum(i in PRODS) DUR(i)*x(i) <= 160        ! Constraint definition
+ sum(i in PRODS) WOOD(i)*x(i) <= 200      
+ forall(i in PRODS) x(i) is_integer
+
+ maximize(sum(i in PRODS) PROFIT(i)*x(i))
+ writeln("Solution: ", getobjval)
+end-model

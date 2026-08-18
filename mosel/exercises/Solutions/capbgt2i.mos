@@ -1,0 +1,89 @@
+(!******************************************************
+   Mosel Example Problems
+   ====================== 
+
+   file capbgt2i.mos
+   `````````````````
+   Capital Budgeting example 
+   with additional logical constraints.
+   - Indicator formulation -
+
+   (c) 2008 Fair Isaac Corporation 
+       author: S. Heipcke, 2004, rev. Jan. 2021
+   
+   The use of this example is subject to legal and
+   license requirements
+   (https://github.com/fico-xpress/xpress-training#legal-and-license-requirements).
+*******************************************************!)
+
+model Capbgt2i
+  uses "mmxprs"                             ! Use Xpress Optimizer
+
+  declarations
+    PROJECTS = 1..8                         ! Set of projects
+    RET: array(PROJECTS) of real            ! ROI per project
+    CAPITAL: array(PROJECTS) of real        ! Required capital per project
+    PERSONNEL: array(PROJECTS) of integer   ! Required personnel per project 
+    CAPITAL_MAX = 478                       ! Limit on avail. capital
+    PERSONNEL_MAX = 106                     ! Limit on avail. personnel
+ 
+    select: array(PROJECTS) of mpvar        ! Selected projects
+    MaxReturn, Capital, Personnel: linctr   ! Constraints and objective
+    
+    procedure solveprob(msg: string) 
+  end-declarations
+
+ !  PROJECTS     1    2    3    4    5    6    7    8
+  CAPITAL   :: [104,  53,  29, 187,  98,  32,  75, 200]
+  PERSONNEL :: [ 22,  14,   7,  36,  24,  10,  20,  41]
+  RET       :: [124,  75,  42, 188, 108,  56,  88, 225]
+ 
+                                    ! Objective: maximize the return  
+  MaxReturn:= sum(p in PROJECTS) RET(p)*select(p)
+
+                                    ! Limit on capital used by all projects
+  Capital:= sum(p in PROJECTS) CAPITAL(p)*select(p) <= CAPITAL_MAX
+                                    ! Limit on personnel used by all projects
+  Personnel:= sum(p in PROJECTS) PERSONNEL(p)*select(p) <= PERSONNEL_MAX
+
+  forall(i in PROJECTS) select(i) is_binary  ! Variables are 0/1
+
+  solveprob("Original problem")
+
+! p1 can only be done if p2 is done
+  select(2) >= select(1)
+
+  solveprob("With C1")
+
+! p1 can only be done if p3 and p6 are done
+ indicator(1, select(1), select(3) + select(6) >= 2) 
+
+  solveprob("With C1-2")
+
+! It is not possible to do both p5 and p6
+  select(5) + select(6) <= 1
+
+  solveprob("With C1-3")
+
+! Either p1 and p2 must be done or p3 and p4 (but not both pairs).
+  select(1) = select(2); select(3) = select(4) 
+  indicator(1, select(1), select(3) + select(4) <= 0)   ! if select(1)=1 ->...
+!  indicator(-1, select(1), select(3) + select(4) >= 2)  ! if select(1)=0 ->...
+
+  solveprob("With C1-4")
+   
+!**** Solve the problem and display solution ****
+  procedure solveprob(msg: string) 
+    maximise(MaxReturn)                ! Solve the MIP-problem
+
+    if getprobstat<>XPRS_OPT then
+      writeln(msg, ": No solution")
+      exit(1)
+    else
+      writeln(msg, ": Solution:\n Objective: ", getobjval)
+      write(" Selected projects: ")
+     forall(i in PROJECTS | select(i).sol=1) write(i, " ")
+     writeln
+    end-if
+  end-procedure
+end-model

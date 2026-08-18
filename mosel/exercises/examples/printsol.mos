@@ -1,0 +1,44 @@
+(!******************************************************
+   Mosel Example Problems
+   ======================
+
+   file printsol.mos 
+   ````````````````` 
+   Using the Optimizer integer solution callback.
+ 
+   (c) 2008 Fair Isaac Corporation
+       author: S. Heipcke, 2001, rev. Apr. 2022
+   
+   The use of this example is subject to legal and
+   license requirements
+   (https://github.com/fico-xpress/xpress-training#legal-and-license-requirements).
+*******************************************************!)
+model "printsol"
+ uses "mmxprs"
+
+ forward procedure printsol
+
+ declarations
+  R = 1..10
+  x: array(R) of mpvar
+ end-declarations
+
+! Problem definition 
+ sum(i in R) i*x(i) <= 15
+ forall(i in R) x(i) is_binary
+ Objective:= sum(i in R) (11-i+5*random)*x(i)
+
+! Set the integer solution callback
+ setcallback(XPRS_CB_INTSOL, ->printsol)
+
+! Solve the problem
+ maximize(Objective)
+
+! Definition of the integer solution callback
+ procedure printsol
+  writeln("Solution: ", getsol(Objective))
+  forall(i in R) write("x(", i, ")=", getsol(x(i)), "\t")
+  writeln
+ end-procedure
+
+end-model

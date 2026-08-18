@@ -1,0 +1,58 @@
+(!******************************************************
+   Mosel Example Problems
+   ======================
+
+   file chess5s.mos
+   ````````````````
+   Data input from external sources, 
+   run-time parameters, string indices.
+   
+   (c) 2008 Fair Isaac Corporation
+       Creation: 2005, rev. Apr. 2013
+   
+   The use of this example is subject to legal and
+   license requirements
+   (https://github.com/fico-xpress/xpress-training#legal-and-license-requirements).
+*******************************************************!)
+
+model "Chess 5s"
+ uses "mmxprs" 
+ 
+ parameters
+  DATAFILE='../data/chess3.dat'   
+
+! DATAFILE="mmsheet.excel:../data/chess2.xls"          ! direct access to Excel 
+! DATAFILE="mmsheet.xlsx:../data/chess2.xlsx"          ! generic spreadsheet access
+! DATAFILE="mmodbc.odbc:../data/chess2.sqlite"         ! SQLite database
+
+ end-parameters             
+
+ declarations
+  PRODS: set of string                     ! Index set
+  DUR, WOOD, PROFIT: array(PRODS) of real  ! Coefficients
+ end-declarations
+
+ initializations from DATAFILE             ! Read data from file
+  DUR WOOD PROFIT
+ end-initializations
+
+ public declarations
+  x: array(PRODS) of mpvar                 ! Array of variables
+  LimWood, LimCap, Demand, Profit: linctr
+ end-declarations
+
+ LimCap:= sum(i in PRODS) DUR(i)*x(i) <= 160        ! Constraint definition
+ LimWood:= sum(i in PRODS) WOOD(i)*x(i) <= 200      
+ forall(i in PRODS) x(i) is_integer
+
+ Demand:= sum(i in PRODS) x(i) >= 100               ! Demand constraint
+
+ Profit:= sum(i in PRODS) PROFIT(i)*x(i)
+ maximize(Profit)
+ if getprobstat=XPRS_OPT then
+   writeln("Solution: ", getobjval)
+ else
+   writeln("No solution.")
+ end-if
+
+end-model

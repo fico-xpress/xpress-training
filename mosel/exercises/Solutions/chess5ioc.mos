@@ -1,0 +1,51 @@
+(!******************************************************
+   Mosel Example Problems
+   ======================
+
+   file chess5ioc.mos
+   ``````````````````
+   Data exchange in memory with C host application.
+   
+   (c) 2008 Fair Isaac Corporation
+       author: S. Heipcke, Feb. 2008
+   
+   The use of this example is subject to legal and
+   license requirements
+   (https://github.com/fico-xpress/xpress-training#legal-and-license-requirements).
+*******************************************************!)
+
+model "Chess 5 (C IO)"
+ uses "mmxprs" 
+
+ parameters
+  NP = 2
+  DDATA=''; WDATA=''; PDATA=''; SOL=''
+ end-parameters
+
+ declarations
+  PRODS = 1..NP                            ! Index range
+  DUR, WOOD, PROFIT: array(PRODS) of real  ! Coefficients
+  xsol: array(PRODS) of real               ! Solution values
+  x: array(PRODS) of mpvar                 ! Array of variables
+ end-declarations
+
+ initializations from 'raw:noindex;'       ! Read data from memory
+  DUR as DDATA
+  WOOD as WDATA
+  PROFIT as PDATA
+ end-initializations
+
+ sum(i in PRODS) DUR(i)*x(i) <= 160        ! Constraint definition
+ sum(i in PRODS) WOOD(i)*x(i) <= 200      
+ forall(i in PRODS) x(i) is_integer
+
+ maximize(sum(i in PRODS) PROFIT(i)*x(i))  ! Solve the problem
+ 
+ forall(i in PRODS) xsol(i):= x(i).sol     ! Save the solution values
+
+ initializations to 'raw:noindex;'         ! Output data to memory
+  xsol as SOL
+ end-initializations
+
+end-model
+

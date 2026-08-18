@@ -1,0 +1,121 @@
+(!******************************************************
+   Mosel Example Problems
+   ======================
+
+   file chess5svg.mos
+   ``````````````````
+   Data input from external sources,
+   run-time parameters, string indices.
+   -- Drawing a pie chart --
+
+   (c) 2016 Fair Isaac Corporation
+       Author: S. Heipcke, June 2016
+   
+   The use of this example is subject to legal and
+   license requirements
+   (https://github.com/fico-xpress/xpress-training#legal-and-license-requirements).
+*******************************************************!)
+
+model "Chess 5 SVG"
+ uses "mmxprs", "mmsvg"
+
+  parameters
+    DATAFILE='../data/chess5ins.dat'
+  ! DATAFILE="mmodbc.odbc:../data/chess5ins.sqlite"   ! Using SQLite database
+  ! DATAFILE="mmsheet.xls:../data/chess5ins.xls"      ! Generic spreadsheet access
+    DEM=50
+  end-parameters
+
+  declarations
+    PRODS: range                             ! Index set for products
+    RESOURCES: set of string                 ! Index set for resources
+    PRODNAME: array(PRODS) of string         ! Product names
+    PROFIT: array(PRODS) of real             ! Unit profit
+    RESUSE: array(RESOURCES, PRODS) of real  ! Resource usage coefficients
+    RESLIM: array(RESOURCES) of real         ! Resource availability
+  end-declarations
+
+  procedure readdata
+    initializations from DATAFILE          ! Read data from file
+      RESUSE [PRODNAME,PROFIT] as "PRODDATA" RESLIM
+    end-initializations
+  end-procedure
+
+  readdata
+
+  declarations
+    produce: array(PRODS) of mpvar           ! Array of decision variables
+    LimCtr: array(RESOURCES) of linctr       ! Limit on resource usage constr.
+    Demand: linctr                           ! Demand constraint
+    TotalProfit: linctr                      ! Objective function
+  end-declarations
+
+ ! Constraint definition
+  forall(r in RESOURCES)
+    LimCtr(r):= sum(i in PRODS) RESUSE(r,i)*produce(i) <= RESLIM(r)
+
+  Demand:= sum(i in PRODS) produce(i)>=DEM
+
+  forall(i in PRODS) produce(i) is_integer
+
+ ! Objective function
+  TotalProfit:=sum(i in PRODS) PROFIT(i)*produce(i)
+
+ ! Problem solving
+!  setparam("XPRS_verbose", true)
+  maximize(TotalProfit)
+
+ ! Solution reporting
+  if getprobstat=XPRS_OPT then
+    writeln("Solution: ", getobjval)
+    forall(i in PRODS) writeln(strfmt(PRODNAME(i),-10), ": ", produce(i).sol)
+  else
+    writeln("No solution found")
+  end-if
+
+ ! Drawing the solution
+  procedure drawpie(xpos, ypos: integer, rad: integer, data:list of real,
+                    pnames:list of string, msg: text)
+    if sum(i in data) i>1 then
+      writeln("Incorrect pie data.")
+      return
+    end-if
+
+    ttl:=0.0; ct:=0
+    forall(i in data, ct as counter) do
+      svgaddgroup("P"+ct,pnames(ct))
+      svgsetstyle(SVG_STROKE,SVG_GREY)
+      svgsetstyle(SVG_STROKEWIDTH,0.5)
+      svgaddpie(xpos, ypos, rad, ttl, ttl+i)
+      ttl+=i
+    end-do
+
+    svgaddgroup("msg", "", SVG_GREY)
+    svgaddtext(xpos, ypos+rad+20, msg)
+    svgsetstyle(svggetlastobj, SVG_TEXTANCHOR, "middle")
+
+   ! Draw the graph
+    svgrefresh
+  end-procedure
+
+  declarations
+    VAL: list of real
+    NAM: list of string
+  end-declarations
+
+ ! Configure and draw the graphic
+  svgsetgraphviewbox(0,0,200,200)
+  forall(i in PRODS | produce(i).sol>0) do
+    VAL+=[produce(i).sol/Demand.act]
+    NAM+=[PRODNAME(i)]
+  end-do
+
+  drawpie(100, 100, 50, VAL, NAM, "Chess solution")
+
+ ! Optionally save graphic to a file
+  svgsave("chesspie.svg")
+
+ ! Wait for display window to close
+  svgwaitclose("Close browser window to terminate model execution.", 1)
+
+end-model

@@ -1,0 +1,31 @@
+(!******************************************************
+   Mosel Example Problems
+   ======================
+
+   file chess1.mos
+   ```````````````
+   Problem definition and solving.
+   
+   (c) 2008 Fair Isaac Corporation
+       Creation: 2005
+   
+   The use of this example is subject to legal and
+   license requirements
+   (https://github.com/fico-xpress/xpress-training#legal-and-license-requirements).
+*******************************************************!)
+
+model "Chess 1"
+ uses "mmxprs"                 ! Use Xpress-Optimizer for solving
+
+ declarations
+  xs: mpvar                    ! Number of small chess sets
+  xl: mpvar                    ! Number of large chess sets
+ end-declarations
+
+ 3*xs + 2*xl <= 160            ! Constraint: limit on working hours
+ xs + 3*xl <= 200              ! Constraint: raw mat. availability
+
+ maximize(5*xs + 20*xl)        ! Objective: maximize total profit
+ 
+end-model
+

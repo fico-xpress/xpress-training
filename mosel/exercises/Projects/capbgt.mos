@@ -1,0 +1,64 @@
+(!******************************************************
+   Mosel Example Problems
+   ====================== 
+
+   file capbgt.mos
+   ```````````````
+   Capital Budgeting.
+   
+   There are 8 projects under consideration. Each requires a capital 
+   investment and a commitment of skilled personnel. The net return 
+   of each project is known. There is $478 000 capital available, and 
+   106 skilled personnel.
+   Which projects should be done? How much spare capital and personnel 
+   are there?
+   NB: the return is net, i.e., it already includes the cost of capital, 
+   along with all other project costs and payments. So the capital 
+   investment for the chosen projects must not be added into the 
+   objective function.
+
+   (c) 2008 Fair Isaac Corporation 
+       authors: Y. Colombani & S. Heipcke, 2001, rev. Jan. 2021
+   
+   The use of this example is subject to legal and
+   license requirements
+   (https://github.com/fico-xpress/xpress-training#legal-and-license-requirements).
+*******************************************************!)
+
+model Capbgt
+  uses "mmxprs"                             ! Use Xpress Optimizer
+
+  declarations
+    PROJECTS = 1..8                         ! Set of projects
+    RET: array(PROJECTS) of real            ! ROI per project
+    CAPITAL: array(PROJECTS) of real        ! Required capital per project
+    PERSONNEL: array(PROJECTS) of integer   ! Required personnel per project 
+    CAPITAL_MAX = 478                       ! Limit on avail. capital
+    PERSONNEL_MAX = 106                     ! Limit on avail. personnel
+ 
+    select: array(PROJECTS) of mpvar        ! Selected projects
+    MaxReturn, Capital, Personnel: linctr   ! Constraints and objective
+  end-declarations
+
+ !  PROJECTS     1    2    3    4    5    6    7    8
+  CAPITAL   :: [104,  53,  29, 187,  98,  32,  75, 200]
+  PERSONNEL :: [ 22,  14,   7,  36,  24,  10,  20,  41]
+  RET       :: [124,  75,  42, 188, 108,  56,  88, 225]
+ 
+                                    ! Objective: maximize the return  
+  MaxReturn:= sum(p in PROJECTS) RET(p)*select(p)
+
+                                    ! Limit on capital used by all projects
+  Capital:= sum(p in PROJECTS) CAPITAL(p)*select(p) <= CAPITAL_MAX
+                                    ! Limit on personnel used by all projects
+  Personnel:= sum(p in PROJECTS) PERSONNEL(p)*select(p) <= PERSONNEL_MAX
+
+  forall(i in PROJECTS) select(i) is_binary  ! Variables are 0/1
+   
+  maximise(MaxReturn)                ! Solve the MIP-problem
+                                     ! Print out the solution
+  writeln("Solution:\n Objective: ", getobjval)
+  write(" Selected projects: ")
+  forall(i in PROJECTS | select(i).sol=1) write(i, " ")
+  writeln
+end-model

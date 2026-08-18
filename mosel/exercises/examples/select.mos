@@ -1,0 +1,46 @@
+(!******************************************************
+   Mosel Example Problems
+   ======================
+
+   file select.mos 
+   ``````````````` 
+   Selection statements in Mosel.
+ 
+   (c) 2008 Fair Isaac Corporation
+       author: S. Heipcke, 2002
+   
+   The use of this example is subject to legal and
+   license requirements
+   (https://github.com/fico-xpress/xpress-training#legal-and-license-requirements).
+*******************************************************!)
+model "selections"
+ uses "mmxprs"
+
+ declarations
+  x,y: mpvar
+  A: integer
+ end-declarations
+ 
+ A:= round(100*(random-0.5))
+ 
+ if A >= 20 then 
+  x <= 7
+ elif A <= 10 then
+  x >= 35
+ else
+  x = 0
+ end-if
+  
+ case A of 
+  -1000..10 : y >= 35
+  20..1000 :  y <= 7
+  12, 15 :    y = 1
+  else        y = 0
+ end-case
+
+ loadprob(x+y)
+ writeln("A = ", A)
+ writeln("x in ", getlb(x), "..", getub(x))
+ writeln("y in ", getlb(y), "..", getub(y))
+
+end-model

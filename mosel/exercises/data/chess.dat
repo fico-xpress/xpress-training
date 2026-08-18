@@ -1,0 +1,8 @@
+! Data file for 'chess4.mos'
+
+DUR:    [3 2]
+WOOD:   [1 3]
+PROFIT: [5 20]
+
+CHESSDATA: [ (1) [3 1 5]
+             (2) [2 3 20] ]

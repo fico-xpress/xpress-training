@@ -1,0 +1,44 @@
+(!******************************************************
+   Mosel Example Problems
+   ======================
+
+   file chess1c.mos
+   ````````````````
+   Problem definition, solving, and solution output.
+   
+   (c) 2008 Fair Isaac Corporation
+       Creation: 2005, rev. Jan 2021
+   
+   The use of this example is subject to legal and
+   license requirements
+   (https://github.com/fico-xpress/xpress-training#legal-and-license-requirements).
+*******************************************************!)
+
+model "Chess 1 (completed)"
+ uses "mmxprs"                    ! Use Xpress Optimizer for solving 
+ 
+ declarations
+  xs,xl: mpvar                    ! Decision variables
+ end-declarations
+
+ Profit:= 5*xs + 20*xl            ! Name the objective function
+ MTime:=   3*xs + 2*xl <= 160     ! and the constraints
+ Wood:=     xs + 3*xl <= 200
+ xs is_integer; xl is_integer     ! Integrality constraints
+
+ setparam("XPRS_verbose", true)   ! Display solver log
+
+ maximize(Profit)                 ! Objective: maximize total profit
+
+ ! Test the solution status
+ if getprobstat<>XPRS_OPT then
+   writeln("Not optimal / no solution")
+   exit(1)
+ end-if
+
+ ! Report on solution values
+ writeln("Solution: ", getobjval) ! Print objective function value
+ writeln("xs: ", getsol(xs), " xl: ", xl.sol)  ! Print sol. val.s
+ write("Time: ", getact(MTime))   ! Constraint activity
+ writeln(" ", getslack(MTime))    ! and slack
+end-model

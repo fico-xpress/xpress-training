@@ -1,0 +1,10 @@
+! Data file for 'chess5s.mos'
+
+DUR:    [("small") 3 ("medium")  2 ("large")  2 ("extra") 3]
+WOOD:   [("small") 1 ("medium")  2 ("large")  3 ("extra") 6]
+PROFIT: [("small") 5 ("medium") 12 ("large") 20 ("extra") 40]
+
+CHESSDATA: [ ("small") [3 1 5]
+             ("medium") [2 2 12]
+             ("large") [2 3 20]
+	     ("extra") [3 6 40] ]

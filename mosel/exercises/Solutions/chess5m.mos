@@ -1,0 +1,85 @@
+(!******************************************************
+   Mosel Example Problems
+   ======================
+
+   file chess5m.mos
+   ````````````````
+   Data input from external sources, 
+   run-time parameters, string indices.
+   -- Documentation annotations --
+   
+   (c) 2016 Fair Isaac Corporation
+       Author: S. Heipcke, June 2016
+   
+   The use of this example is subject to legal and
+   license requirements
+   (https://github.com/fico-xpress/xpress-training#legal-and-license-requirements).
+*******************************************************!)
+
+model "Chess 5 moseldoc"
+  uses "mmxprs"  
+
+ !@doc.chapter Introduction
+ !@doc.p [XML] This model solves a small production planning problem, producing output images like this example: <img src="../chesspie.svg"/>
+
+ !@doc.chapter Run-time parameters
+
+  parameters
+    !@doc.descr Data file (extended filename incl I/O driver)
+    DATAFILE='../data/chess5ins.dat'     
+  ! DATAFILE="mmodbc.odbc:../data/chess5ins.sqlite"   ! Using SQLite database 
+  ! DATAFILE="mmsheet.xls:../data/chess5ins.xls"      ! Generic spreadsheet access
+    !@doc.descr Minimum demand
+    DEM=50        
+  end-parameters             
+
+ !@doc.chapter Model entities
+
+  public declarations
+    PRODS: range                            !@doc.descr Index set for products
+    RESOURCES: set of string                !@doc.descr Index set for resources
+    PRODNAME: array(PRODS) of string        !@doc.descr Product names
+    PROFIT: array(PRODS) of real            !@doc.descr Unit profit
+    RESUSE: array(RESOURCES, PRODS) of real !@doc.descr Resource usage coefficients
+    RESLIM: array(RESOURCES) of real        !@doc.descr Resource availability
+  end-declarations
+
+ !@doc.descr Reading the input data from file
+  public procedure readdata
+    initializations from DATAFILE 
+      RESUSE [PRODNAME,PROFIT] as "PRODDATA" RESLIM
+    end-initializations
+  end-procedure
+
+  readdata
+
+  public declarations
+    produce: array(PRODS) of mpvar       !@doc.descr Array of decision variables
+    LimCtr: array(RESOURCES) of linctr   !@doc.descr Limit on resource usage constr.
+    Demand: linctr                       !@doc.descr Demand constraint
+    TotalProfit: linctr                  !@doc.descr Objective function
+  end-declarations
+
+ ! Constraint definition
+  forall(r in RESOURCES)
+    LimCtr(r):= sum(i in PRODS) RESUSE(r,i)*produce(i) <= RESLIM(r)        
+
+  Demand:= sum(i in PRODS) produce(i)>=DEM
+
+  forall(i in PRODS) produce(i) is_integer
+
+ ! Objective function
+  TotalProfit:=sum(i in PRODS) PROFIT(i)*produce(i)
+
+ ! Problem solving
+!  setparam("XPRS_verbose", true)
+  maximize(TotalProfit)
+
+ ! Solution reporting
+  if getprobstat=XPRS_OPT then
+    writeln("Solution: ", getobjval)
+    forall(i in PRODS) writeln(strfmt(PRODNAME(i),-10), ": ", produce(i).sol)
+  else
+    writeln("No solution found")
+  end-if  
+end-model

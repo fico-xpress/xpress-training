@@ -1,0 +1,49 @@
+(!******************************************************
+   Mosel Example Problems
+   ======================
+
+   file chess5s.mos
+   ````````````````
+   Data input from external sources, 
+   run-time parameters, string indices.
+   
+   (c) 2008 Fair Isaac Corporation
+       Creation: 2005, rev. Apr. 2013
+   
+   The use of this example is subject to legal and
+   license requirements
+   (https://github.com/fico-xpress/xpress-training#legal-and-license-requirements).
+*******************************************************!)
+
+model "Chess 5s"
+ uses "mmxprs" 
+ 
+ parameters
+  DATAFILE='../data/chess2.dat'   
+
+! DATAFILE="mmsheet.excel:../data/chess2.xls"          ! direct access to Excel 
+! DATAFILE="mmsheet.xlsx:../data/chess2.xlsx"          ! generic spreadsheet access
+! DATAFILE="mmodbc.odbc:../data/chess2.sqlite"         ! SQLite database
+
+ end-parameters             
+
+ declarations
+  PRODS: set of string                     ! Index set
+  DUR, WOOD, PROFIT: array(PRODS) of real  ! Coefficients
+ end-declarations
+
+ initializations from DATAFILE             ! Read data from file
+  DUR WOOD PROFIT
+ end-initializations
+
+ declarations
+  x: array(PRODS) of mpvar                 ! Array of variables
+ end-declarations
+
+ sum(i in PRODS) DUR(i)*x(i) <= 160        ! Constraint definition
+ sum(i in PRODS) WOOD(i)*x(i) <= 200      
+ forall(i in PRODS) x(i) is_integer
+
+ maximize(sum(i in PRODS) PROFIT(i)*x(i))
+ writeln("Solution: ", getobjval)
+end-model

@@ -1,0 +1,74 @@
+// Java deployment template completed with model parameter setting and
+// retrieval of the optimal solution value 
+
+import java.io.*;
+import com.dashoptimization.*;
+
+public class chessc
+{
+ public static void main(String[] args)
+ {
+  int result;
+
+  try {
+   result=run_mosel();
+   System.out.println("Model execution returned: "+result);
+  }
+  catch(java.io.IOException e)
+  {
+   System.out.println("Mosel could not load the model ("+e.getMessage()+")");
+  }
+  catch(java.lang.Exception e)
+  {
+   System.out.println("Error during execution");
+  }
+ }
+
+ static int run_mosel() throws java.io.IOException, java.lang.Exception
+ {
+  XPRMModel model;
+  XPRM xprm;
+  int result;
+
+  try
+  {
+    // Initialize Mosel
+    xprm = new XPRM();
+
+    // Load compiled model (.BIM file)
+    model=xprm.loadModel("chess5.bim");
+
+    // Run model
+    model.execParams = "DATAFILE=chess4.dat";
+    model.run();
+
+    if(model.getExecStatus() != XPRMModel.RT_OK)
+    {
+      throw new java.lang.Exception("Error during execution");
+    }
+    else
+    {
+      if (model.getProblemStatus()!=XPRMModel.PB_OPTIMAL)
+        throw new java.lang.Exception("Solution is not optimal");
+      else
+      {
+        System.out.println("Objective value: " + model.getObjectiveValue());
+        result=model.getResult();
+        return result;
+      }	
+    }
+  }
+  catch(XPRMLicenseError e)
+  {
+    System.out.println("License error" + e.getMessage());
+    throw new java.lang.Exception("Error during execution");
+  }
+  catch(java.io.IOException e)
+  {
+    System.out.println("Failed to load model");
+    throw new java.lang.Exception("Error during execution");
+  }
+
+  // Clean up is automatic in Java
+ }
+}
